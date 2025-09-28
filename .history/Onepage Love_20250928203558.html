@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Aku beneran suka sama kamu, Nova ❤️</title>
+  <style>
+    :root{
+      --bg:#0f1724;
+      --card:#0b1220;
+      --text:#ffeef8;
+    }
+    html,body{height:100%;margin:0;font-family:system-ui,-apple-system,'Segoe UI',Roboto,'Helvetica Neue',Arial}
+    body{
+      display:grid;place-items:center;background:linear-gradient(180deg,#0b1220 0%, #08111a 60%, #031018 100%);color:var(--text);
+      overflow:hidden;
+    }
+
+    .card{
+      width:min(880px,92%);
+      padding:48px 36px;
+      text-align:center;border-radius:18px;background:rgba(255,255,255,0.03);backdrop-filter:blur(6px);
+      box-shadow:0 6px 30px rgba(2,6,23,0.6);position:relative;overflow:visible
+    }
+
+    h1{font-size:clamp(28px,6vw,56px);margin:0 0 12px;letter-spacing:0.4px}
+    p.lead{margin:0 0 22px;font-size:18px;opacity:0.95}
+
+    .hint{font-size:13px;opacity:0.6}
+
+    /* heart style */
+    .heart{
+      position:absolute;pointer-events:none;transform:translate(-50%, -50%) scale(1);
+      width:36px;height:36px;display:block;will-change:transform,opacity;
+      animation:floatUp 3000ms linear forwards, pop .35s ease-out;
+    }
+
+    .heart svg{width:100%;height:100%;display:block;filter:drop-shadow(0 6px 18px rgba(0,0,0,0.45));}
+
+    @keyframes floatUp{
+      0%{opacity:0;transform:translate(-50%,20px) scale(0.85)}
+      8%{opacity:1}
+      70%{transform:translate(-50%, -220px) scale(1.03)}
+      100%{opacity:0;transform:translate(-50%,-320px) scale(0.9)}
+    }
+
+    @keyframes pop{
+      0%{transform:translate(-50%,-50%) scale(0.6)}
+      60%{transform:translate(-50%,-50%) scale(1.05)}
+      100%{transform:translate(-50%,-50%) scale(1)}
+    }
+
+    /* small controls */
+    .controls{position:fixed;left:18px;bottom:18px;display:flex;gap:8px;align-items:center}
+    .btn{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.04);padding:10px 12px;border-radius:10px;color:var(--text);cursor:pointer;font-size:13px}
+    .btn:active{transform:translateY(1px)}
+
+    /* responsive spacing so hearts show above edges */
+    @media (max-width:560px){.card{padding:28px 18px}}
+  </style>
+</head>
+<body>
+  <div class="card" id="card">
+    <h1>aku beneran suka sama kamu, <span style="color:#ff9ab3">Nova</span></h1>
+    <p class="lead">Setiap hati yang muncul adalah tanda kecil kalau aku kepikiran kamu 💭<br>
+      Klik di mana saja atau pakai tombol "Auto Love" untuk membuat lebih banyak love.</p>
+    <div class="hint">Tip: klik halaman beberapa kali untuk melempar hati</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn" id="autoBtn">Auto Love: OFF</button>
+    <button class="btn" id="clearBtn">Hapus Semua</button>
+  </div>
+
+  <script>
+    // small util: random number
+    const rnd = (min, max)=> Math.random()*(max-min)+min;
+
+    const colors = ['#ff3b6b','#ff6f91','#ff9ab3','#ffb3c7','#ffd6e8'];
+    const container = document.body;
+    let autoInterval = null;
+
+    function createHeart(x, y){
+      const el = document.createElement('div');
+      el.className = 'heart';
+      const size = Math.round(rnd(18,56));
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.zIndex = 9999;
+      el.style.opacity = 0;
+
+      const color = colors[Math.floor(Math.random()*colors.length)];
+      const rotate = Math.round(rnd(-25,25));
+      el.style.transform = `translate(-50%,-50%) rotate(${rotate}deg)`;
+
+      // SVG heart (keeps it sharp)
+      el.innerHTML = `
+        <svg viewBox="0 0 32 29.6" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M23.6 0c-2.9 0-5.6 1.6-7.6 4-2-2.4-4.7-4-7.6-4C3.1 0 .4 2.7.4 6c0 7.4 9 11.8 15.2 18.6 6.1-6.8 15.2-11.2 15.2-18.6C31.6 2.7 28.9 0 23.6 0z" fill="${color}"/>
+        </svg>`;
+
+      container.appendChild(el);
+
+      // cleanup after animation ends (3.2s to be safe)
+      setTimeout(()=>{
+        if(el && el.parentNode) el.parentNode.removeChild(el);
+      }, 3500);
+    }
+
+    // spawn at mouse position (click)
+    document.addEventListener('click', function(e){
+      // don't spawn from clicking the control buttons area
+      const path = e.composedPath ? e.composedPath() : (e.path || []);
+      if(path.some(node=> node.id === 'autoBtn' || node.id === 'clearBtn')) return;
+      createHeart(e.clientX, e.clientY);
+    });
+
+    // auto spawn random positions inside the card
+    const autoBtn = document.getElementById('autoBtn');
+    const clearBtn = document.getElementById('clearBtn');
+
+    autoBtn.addEventListener('click', ()=>{
+      if(autoInterval){
+        clearInterval(autoInterval); autoInterval = null; autoBtn.textContent = 'Auto Love: OFF';
+      } else {
+        autoBtn.textContent = 'Auto Love: ON';
+        autoInterval = setInterval(()=>{
+          // spawn near the heading area
+          const rect = document.getElementById('card').getBoundingClientRect();
+          const x = rnd(rect.left+20, rect.right-20);
+          const y = rnd(rect.top+20, rect.bottom-20);
+          createHeart(x,y);
+        }, 350);
+      }
+    });
+
+    clearBtn.addEventListener('click', ()=>{
+      document.querySelectorAll('.heart').forEach(h=>h.remove());
+    });
+
+    // small gentle entrance hearts
+    window.addEventListener('load', ()=>{
+      const rect = document.getElementById('card').getBoundingClientRect();
+      for(let i=0;i<6;i++){
+        setTimeout(()=> createHeart(rnd(rect.left+40,rect.right-40), rnd(rect.top+10,rect.top+80)), i*220);
+      }
+    });
+
+  </script>
+</body>
+</html>
